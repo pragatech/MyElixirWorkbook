@@ -1,8 +1,8 @@
 defmodule Stack.Server do
-    use GenServer
+    use GenServer, restart: :transient
 
-    def start_link(stack) do
-        GenServer.start_link(__MODULE__, [stack], name: __MODULE__)
+    def start_link(_stack) do
+        GenServer.start_link(__MODULE__, nil, name: __MODULE__)
     end
 
     def push(new_number) do
@@ -15,7 +15,7 @@ defmodule Stack.Server do
 
     #############################################
     def init(stack) do
-        {:ok, stack}
+        {:ok, Stack.Stash.get()}
     end
 
     def handle_cast({:push, new_number}, stack) do
@@ -26,7 +26,7 @@ defmodule Stack.Server do
         {:reply, head, tail}
     end
 
-    def terminate(reason, state) do
-        IO.puts "#{inspect reason} and state #{inspect state}" 
+    def terminate(_reason, state) do
+        Stack.Stash.update state
     end
 end

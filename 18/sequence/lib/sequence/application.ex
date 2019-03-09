@@ -9,12 +9,13 @@ defmodule Sequence.Application do
     # List all child processes to be supervised
     children = [
       # Starts a worker by calling: Sequence.Worker.start_link(arg)
-      {Sequence.Server, 13}
+      {Sequence.Stash, 123},
+      {Sequence.Server, nil}
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
-    opts = [strategy: :one_for_one, name: Sequence.Supervisor]
+    opts = [strategy: :rest_for_one, name: Sequence.Supervisor]
     Supervisor.start_link(children, opts)
   end
 end
