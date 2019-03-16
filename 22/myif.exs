@@ -1,0 +1,24 @@
+defmodule My do
+    defmacro if(condition, clauses) do
+        do_clause = Keyword.get(clauses, :do, nil)
+        else_clause = Keyword.get(clauses, :else, nil)
+        IO.puts "do_clause value is #{inspect do_clause}"
+        IO.puts "else_clause value is #{inspect else_clause}"
+        quote do
+            case unquote(condition) do
+                val when val in [false, nil]
+                    -> unquote(else_clause)
+                _other -> unquote(do_clause)
+            end
+        end
+    end
+end
+
+defmodule Test do
+    require My
+    My.if 1 == 3 do
+        IO.puts "1 == 3"
+    else
+        IO.puts "1 != 3"
+    end
+end
