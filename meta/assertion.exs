@@ -1,0 +1,70 @@
+defmodule Assertion do
+    defmacro assert({operator, _, [lhs, rhs]}) do
+        quote bind_quoted: [operator: operator, lhs: lhs, rhs: rhs] do
+            Assertion.Test.assert(operator, lhs, rhs)
+        end
+    end
+
+    defmacro __using__(_opt) do
+        quote do
+            import unquote(__MODULE__)
+            Module.register_attribute(__MODULE__, :tests, accumulate: true)
+            @before_compile unquote(__MODULE__)
+        end
+    end
+
+    defmacro __before_compile__(_env) do
+        quote do
+            def run do
+                Assertion.Test.run(@tests, __MODULE__)
+            end
+        end
+    end
+    defmacro test(desc, do: test_block) do
+        test_func = String.to_atom(desc)
+        quote bind_quoted: [desc: desc], unquote: true do
+            @tests {unquote(test_func), desc}
+            def unquote(test_func)(), do: unquote(test_block)
+        end
+    end
+end
+
+defmodule Assertion.Test do
+    def run(tests, module) do        
+        Enum.each tests, fn {test_func, d} ->
+            case apply(module, test_func, []) do
+                :ok -> IO.write "."
+                {:fail, reason} -> IO.puts """
+                    ===========================================================
+                    FAILURE: #{d}
+                    ===========================================================
+                    #{reason}
+                    """
+            end
+        end
+    end
+
+    def assert(:==, lhs, rhs) when lhs === rhs do
+        IO.puts "."
+    end
+
+    def assert(:==, lhs, rhs) do
+        IO.puts """
+            FAILURE:
+            Expected:        #{lhs}
+            to be equal to : #{rhs}
+        """
+    end
+
+    def assert(:>, lhs, rhs) when lhs > rhs do
+        IO.puts "."
+    end
+
+    def assert(:>, lhs, rhs) do
+        IO.puts """
+            FAILURE:
+            Expected:            #{lhs}
+            to be greater than : #{rhs}
+        """
+    end
+end
