@@ -1,11 +1,26 @@
 defmodule Html do
+    @external_resource tags_path = Path.join __DIR__, "tags.txt"
+
+    @tags (for line <- File.stream!(tags_path, [], :line) do
+        line |> String.trim |> String.to_atom
+    end)
+
+    for tag <- @tags do
+        defmacro unquote(tag)(do: inner) do
+            tag1 = unquote(tag)
+            quote do                
+                tag(unquote(tag1), do: unquote(inner))
+            end
+        end
+    end
     defmacro markup(do: block) do
         quote do
+            import Kernel, except: [div: 2]
             {:ok, var!(buffer, Html)} = start_buffer([])
             unquote(block)
             result = render(var!(buffer, Html))
             :ok = stop_buffer(var!(buffer, Html))
-            IO.puts Macro.to_string result
+            #IO.puts Macro.to_string result
             result
         end
     end
